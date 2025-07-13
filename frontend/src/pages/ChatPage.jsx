@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import socket from "../socket";
 import { useUser } from "../context/UserContext";
+import "./ChatPage.css";
 
 function ChatPage() {
     const [input, setInput] = useState("");
@@ -14,6 +15,7 @@ function ChatPage() {
         socket.on("sessionExpired", () => {
             alert("Session expired — all users left.");
             setMessages([]);
+            setHasJoined(false);
         });
 
         return () => {
@@ -24,7 +26,7 @@ function ChatPage() {
     }, []);
 
     const joinChat = () => {
-        if (chatName) {
+        if (chatName.trim()) {
             socket.emit("join", chatName);
             setHasJoined(true);
         }
@@ -39,28 +41,42 @@ function ChatPage() {
 
     if (!hasJoined) {
         return (
-            <div className="join-container">
-                <input placeholder="Your Chat Name" value={chatName} onChange={(e) => setChatName(e.target.value)} />
-                <button onClick={joinChat}>Join Chat</button>
+            <div className="chat-wrapper">
+                <div className="join-container">
+                    <h2>Enter Chat Name</h2>
+                    <input
+                        type="text"
+                        placeholder="Your Chat Name"
+                        value={chatName}
+                        onChange={(e) => setChatName(e.target.value)}
+                    />
+                    <button onClick={joinChat}>Join Chat</button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="chat-container">
-            <div className="chat-box">
-                {messages.map((msg, i) => (
-                    <div key={i}><strong>{msg.user}</strong>: {msg.text}</div>
-                ))}
-            </div>
-            <div className="chat-input">
-                <input
-                    placeholder="Type message"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                />
-                <button onClick={sendMessage}>Send</button>
+        <div className="chat-wrapper">
+            <div className="chat-container">
+                <h2 className="chat-title">💬 Let's Chat</h2>
+                <div className="chat-box">
+                    {messages.map((msg, i) => (
+                        <div key={i} className="chat-message">
+                            <strong>{msg.user}</strong>: {msg.text}
+                        </div>
+                    ))}
+                </div>
+                <div className="chat-input-row">
+                    <input
+                        className="chat-input"
+                        placeholder="Type message"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    />
+                    <button className="chat-send" onClick={sendMessage}>Send</button>
+                </div>
             </div>
         </div>
     );
