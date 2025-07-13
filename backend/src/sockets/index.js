@@ -1,7 +1,7 @@
 const { Server } = require('socket.io');
 
 let activeUsers = new Set();
-let messages = []; // 🧠 In-memory message store
+let messages = [];
 
 const setupSocket = (server) => {
     const io = new Server(server, {
@@ -14,32 +14,30 @@ const setupSocket = (server) => {
     io.on('connection', (socket) => {
         console.log(`🟢 Connected: ${socket.id}`);
 
-        socket.on('join', (username) => {
-            socket.username = username;
+        socket.on('join', (chatName) => {
+            socket.username = chatName;
             activeUsers.add(socket.id);
-            console.log(`👤 ${username} joined`);
 
-            // 🔁 Send current messages to newly joined user
+            // Send current session messages
             socket.emit('chatHistory', messages);
 
-            // Notify others
-            io.emit('userJoined', `${username} joined the chat`);
+            io.emit('userJoined', `${chatName} joined the chat`);
         });
 
         socket.on('message', (msg) => {
             const messageData = { user: socket.username, text: msg };
-            messages.push(messageData); // 💾 Save in memory
-            io.emit('message', messageData); // Broadcast to all
+            messages.push(messageData);
+            io.emit('message', messageData);
         });
 
         socket.on('disconnect', () => {
             activeUsers.delete(socket.id);
-            console.log(`🔴 ${socket.username} disconnected`);
             io.emit('userLeft', `${socket.username} left the chat`);
+            console.log(`🔴 Disconnected: ${socket.username}`);
 
             if (activeUsers.size === 0) {
-                console.log('💤 All users disconnected. Clearing session.');
-                messages = []; // 🧹 Clear chat history
+                console.log('💤 All users left. Session expired.');
+                messages = [];
                 io.emit('sessionExpired');
             }
         });
